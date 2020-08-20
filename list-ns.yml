@@ -1,0 +1,14 @@
+---
+# example for listing all namespaces
+
+- name: Playbook listing all namespaces against a k8s cluster
+  hosts: all
+  tasks:
+    - name: Fetch the namespaces list
+      set_fact:
+        projects: "{{ lookup('k8s', api_version='v1', kind='Namespace') }}"
+    
+    - name: Display namespaces list
+      debug:
+        msg: "{{ projects }}"
+...
