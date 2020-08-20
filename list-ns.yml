@@ -3,6 +3,9 @@
 
 - name: Playbook listing all namespaces against a k8s cluster
   hosts: all
+  connection: local
+  vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
   tasks:
     - name: Fetch the namespaces list
       set_fact:
