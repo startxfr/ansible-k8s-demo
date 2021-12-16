@@ -1,0 +1,6 @@
+---
+collections:
+  - name: community.okd
+    source: https://galaxy.ansible.com
+  - name: community.aws
+    source: https://galaxy.ansible.com
