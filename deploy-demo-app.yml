@@ -30,3 +30,65 @@
           command: "/bin/sx"
           args: run
           debug: true
+
+
+- name: Create demo-from-automation namespace
+  community.okd.k8s:
+    name: demo-from-automation
+    api_version: v1
+    kind: Namespace
+    state: present
+- name: Create application service
+  community.okd.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: web
+        namespace: demo-from-automation
+        labels:
+          app: demo
+          service: demo-from-automation
+      spec:
+        selector:
+          app: demo
+          service: demo-from-automation
+        ports:
+        - protocol: TCP
+          targetPort: 8080
+          name: port-8080-tcp
+          port: 8080
+
+- name: Create application pod
+  community.okd.k8s:
+    state: present
+    definition:
+      kind: Pod
+      apiVersion: v1
+      metadata:
+        annotations:
+          openshift.io/generated-by: startx-automation
+        name: demo
+        namespace: demo-from-automation
+        labels:
+          app: demo
+          service: demo-from-automation
+      spec:
+        containers:
+          - name: application
+            resources:
+              limits:
+                cpu: 50m
+                memory: 128Mi
+              requests:
+                cpu: 10m
+                memory: 64Mi
+            ports:
+              - containerPort: 8080
+                protocol: TCP
+            command:
+              - /bin/sx-apache
+            image: 'quay.io/startx/php:alpine3'
+            args:
+              - run

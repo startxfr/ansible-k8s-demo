@@ -1,0 +1,32 @@
+---
+# example for listing all namespaces
+
+- name: Playbook deploying an example application using helm packages
+  hosts: all
+  connection: local
+  vars:
+    helm_chart_url: "https://startxfr.github.io/helm-repository/packages"
+  tasks:
+    - name: Add helm repo
+      kubernetes.core.helm_repository:
+        name: startx
+        repo_url: "{{ helm_chart_url }}"
+    - name: Deploy a demo pod (fedora)
+      kubernetes.core.helm:
+        name: sxapi-automation
+        release_namespace: demo-automation
+        chart_ref: startx/example-pod
+        values:
+          nameOverride: demo-helm-pod
+          versionOverride: "0.0.1"
+          context: 
+          scope: startx
+          cluster: localhost
+          environment: demo
+          component: automation
+          app: demo-helm-pod
+          version: "0.0.1"
+          image: "quay.io/startx/fedora:latest"
+          command: "/bin/sx"
+          args: run
+          debug: true
