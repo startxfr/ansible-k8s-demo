@@ -13,19 +13,18 @@
         repo_url: "{{ helm_chart_url }}"
     - name: Deploy a demo pod (fedora)
       kubernetes.core.helm:
-        name: sxapi-automation
-        release_namespace: demo-automation
+        name: demo-automation
+        release_namespace: default
         chart_ref: startx/example-pod
         values:
           nameOverride: demo-helm-pod
-          versionOverride: "0.0.1"
           context: 
-          scope: startx
-          cluster: localhost
-          environment: demo
-          component: automation
-          app: demo-helm-pod
-          version: "0.0.1"
+            scope: startx
+            cluster: localhost
+            environment: demo
+            component: automation
+            app: demo-helm-pod
+            version: "0.0.1"
           image: "quay.io/startx/fedora:latest"
           command: "/bin/sx"
           args: run

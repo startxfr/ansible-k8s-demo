@@ -1,0 +1,34 @@
+---
+# example for listing all namespaces
+
+- name: Playbook deploying a MongoDB demo backend using helm packages
+  hosts: all
+  connection: local
+  vars:
+    app_name: "demo-mongo"
+    namespace: "demo-from-automation"
+    image: "mongo:alpine3"
+    command: "/bin/sx-mongo"
+    helm_chart_url: "https://startxfr.github.io/helm-repository/packages"
+  tasks:
+    - name: Add helm repo
+      kubernetes.core.helm_repository:
+        name: startx
+        repo_url: "{{ helm_chart_url }}"
+    - name: Deploy a mongodb demo pod (alpine 3)
+      kubernetes.core.helm:
+        name: demo-automation
+        release_namespace: "{{ namespace }}"
+        chart_ref: startx/example-pod
+        values:
+          context: 
+            scope: startx
+            cluster: localhost
+            environment: demo
+            component: automation
+            app: "{{ app_name }}"
+            version: "0.0.1"
+          image: "quay.io/startx/{{ image }}"
+          command: "{{ command }}"
+          args: run
+          debug: true

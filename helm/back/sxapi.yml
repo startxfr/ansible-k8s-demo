@@ -1,0 +1,65 @@
+---
+# example for deployment of a small API
+
+- name: Playbook deploying an sxapi application using helm packages
+  hosts: local
+  connection: local
+  vars:
+    helm_chart_url: "https://startxfr.github.io/helm-repository/packages"
+  tasks:
+    - name: Add startx helm repo
+      kubernetes.core.helm_repository:
+        name: startx
+        repo_url: "{{ helm_chart_url }}"
+    - name: Deploy sxapi application (fedora)
+      kubernetes.core.helm:
+        name: sxapi-automation
+        release_namespace: default
+        chart_ref: startx/example-sxapi
+        values:
+          context: &context
+            scope: startx
+            environment: demo
+            component: automation
+            app: demo-sxapi-automation
+            version: "0.0.1"
+          sxapi:
+            context: 
+              <<: *context
+            sxapi:
+              service:
+                enabled: true
+              version: "0.3.63"
+              profile: "prod:start"
+              debug: true
+              replicas: 1
+              data: |
+                sxapi.yml: |-
+                  name: {{ include "startx.appName" . }}
+                  description: This is the description of {{ include "startx.appName" . }}
+                  version: {{ include "startx.appVersion" . }}
+                  debug: "{{- .Values.sxapi.debug }}"
+                  resources:
+                    serviceinfo-sample:
+                      _class: serviceinfo
+                  log:
+                    filters:
+                      level: '0,1,2,3,4'
+                      type: debug,info,error,warn
+                  bot:
+                    lib: "/conf/mylib"
+                    cron:
+                    - id: test-cront-task
+                      name: Execute test cron task
+                      schedule: "*/1 * * * *"
+                      task: myCronFunction
+                mylib.js: |-
+                  /* global $log, module */
+                  //'use strict';
+                  var mylib = {
+                    myCronFunction: function (config) {
+                      var moment = require('moment');
+                      $log.info("cron task " + config.id + " executed at " + moment().format('YYYY-MM-DD HH:mm:ss'));
+                    }
+                  };
+                  module.exports = mylib;

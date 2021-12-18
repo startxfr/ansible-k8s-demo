@@ -13,5 +13,5 @@
     
     - name: Display namespaces list
       debug:
-        msg: "{{ projects }}"
+        var: "{{ projects }}"
 ...

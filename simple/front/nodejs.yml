@@ -1,0 +1,94 @@
+---
+# example for listing all namespaces
+
+- name: Playbook deploying a NodeJS demo application using helm packages
+  hosts: all
+  connection: local
+  vars:
+    app_name: "demo-nodejs"
+    namespace: "demo-from-automation"
+    image: "nodejs:alpine3"
+    command: "/bin/sx-nodejs"
+  tasks:
+    - name: Create {{ namespace }} namespace
+      community.okd.k8s:
+        name: "{{ namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create {{ app_name }} pod
+      community.okd.k8s:
+        state: present
+        definition:
+          kind: Pod
+          apiVersion: v1
+          metadata:
+            annotations:
+              openshift.io/generated-by: startx-automation
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+            labels:
+              app: "{{ app_name }}"
+              service: "{{ namespace }}"
+          spec:
+            containers:
+              - name: application
+                image: 'quay.io/startx/{{ image }}'
+                resources:
+                  limits:
+                    cpu: 50m
+                    memory: 128Mi
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                ports:
+                  - containerPort: 8080
+                    protocol: TCP
+                command:
+                  - "{{ command }}"
+                args:
+                  - run
+
+    - name: Create {{ app_name }} service
+      community.okd.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+            labels:
+              app: "{{ app_name }}"
+              service: "{{ namespace }}"
+          spec:
+            selector:
+              app: "{{ app_name }}"
+              service: "{{ namespace }}"
+            ports:
+            - protocol: TCP
+              targetPort: 8080
+              name: port-8080-tcp
+              port: 8080
+
+    - name: Create {{ app_name }} route
+      community.okd.k8s:
+        state: present
+        definition:
+          apiVersion: route.openshift.io/v1
+          kind: Route
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+            labels:
+              app: "{{ app_name }}"
+              service: "{{ namespace }}"
+          spec:
+            to:
+              kind: Service
+              name: "{{ app_name }}"
+              weight: 100
+            port:
+              targetPort: port-8080-tcp
+            wildcardPolicy: None

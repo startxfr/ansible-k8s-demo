@@ -1,0 +1,25 @@
+---
+# example for deployment of a small API
+
+- name: Playbook deploying an sxapi application using helm packages
+  hosts: local
+  connection: local
+  vars:
+    helm_chart_url: "https://startxfr.github.io/helm-repository/packages"
+  tasks:
+    - name: Add startx helm repo
+      kubernetes.core.helm_repository:
+        name: startx
+        repo_url: "{{ helm_chart_url }}"
+    - name: Deploy sxapi application (fedora)
+      kubernetes.core.helm:
+        name: sxapi-automation
+        release_namespace: default
+        chart_ref: startx/example-sxapi
+        values:
+          context: 
+            scope: startx
+            environment: demo
+            component: automation
+            app: demo-sxapi-automation
+            version: "0.0.1"

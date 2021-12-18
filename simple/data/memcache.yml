@@ -1,0 +1,73 @@
+---
+# example for listing all namespaces
+
+- name: Playbook deploying a Memcache demo backend using helm packages
+  hosts: all
+  connection: local
+  vars:
+    app_name: "demo-memcache"
+    namespace: "demo-from-automation"
+    image: "memcache:alpine3"
+    command: "/bin/sx-memcache"
+  tasks:
+    - name: Create {{ namespace }} namespace
+      community.okd.k8s:
+        name: "{{ namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create {{ app_name }} pod
+      community.okd.k8s:
+        state: present
+        definition:
+          kind: Pod
+          apiVersion: v1
+          metadata:
+            annotations:
+              openshift.io/generated-by: startx-automation
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+            labels:
+              app: "{{ app_name }}"
+              service: "{{ namespace }}"
+          spec:
+            containers:
+              - name: application
+                image: 'quay.io/startx/{{ image }}'
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 512Mi
+                  requests:
+                    cpu: 50m
+                    memory: 128Mi
+                ports:
+                  - containerPort: 11211
+                    protocol: TCP
+                command:
+                  - "{{ command }}"
+                args:
+                  - run
+
+    - name: Create {{ app_name }} service
+      community.okd.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+            labels:
+              app: "{{ app_name }}"
+              service: "{{ namespace }}"
+          spec:
+            selector:
+              app: "{{ app_name }}"
+              service: "{{ namespace }}"
+            ports:
+            - protocol: TCP
+              targetPort: 11211
+              name: port-11211-tcp
+              port: 11211

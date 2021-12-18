@@ -1,0 +1,48 @@
+---
+# example for listing all namespaces
+
+- name: Playbook deploying a Fedora 35 demo OS
+  hosts: all
+  connection: local
+  vars:
+    app_name: "demo-os-fedora"
+    namespace: "demo-from-automation"
+    image: "fedora:35"
+    command: "/bin/sx"
+  tasks:
+    - name: Create {{ namespace }} namespace
+      community.okd.k8s:
+        name: "{{ namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create {{ app_name }} pod
+      community.okd.k8s:
+        state: present
+        definition:
+          kind: Pod
+          apiVersion: v1
+          metadata:
+            annotations:
+              openshift.io/generated-by: startx-automation
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+            labels:
+              app: "{{ app_name }}"
+              service: "{{ namespace }}"
+          spec:
+            containers:
+              - name: application
+                image: 'quay.io/startx/{{ image }}'
+                resources:
+                  limits:
+                    cpu: 50m
+                    memory: 128Mi
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                command:
+                  - "{{ command }}"
+                args:
+                  - run
